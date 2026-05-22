@@ -1,4 +1,4 @@
-# app_arly.py - VERSÃO OTIMIZADA COM CONVERSA CASUAL
+# app_arly.py - VERSÃO COM MODELOS CORRETOS
 
 import os
 import json
@@ -13,8 +13,8 @@ from config_arly import (
     EXPLICACAO_QUIMICA_SCHEMA, 
     SYSTEM_INSTRUCTION_ARLY,
     RESOLUCAO_EXERCICIO_SCHEMA,
-    CONVERSA_SIMPLES_SCHEMA,  # NOVO!
-    is_casual_conversation      # NOVO!
+    CONVERSA_SIMPLES_SCHEMA,
+    is_casual_conversation
 )
 
 # Carrega as variáveis de ambiente e inicia o Gemini
@@ -31,26 +31,21 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 
 # Inicializa o Flask
 app = Flask(__name__)
-CORS(app)  # Permite requisições do frontend
+CORS(app)
 
 # ========== FUNÇÕES DA ARLY ==========
 
 def explicar_conceito(duvida_aluno, nivel="medio"):
     """
     Gera uma explicação química baseada na dúvida do aluno.
-    Versão INTELIGENTE que detecta conversa casual e otimiza resposta.
-    
-    Parâmetros:
-    - duvida_aluno: string com a pergunta ou conceito a ser explicado
-    - nivel: "basico", "medio" ou "avancado"
     """
     
-    # 🔥 DETECÇÃO DE CONVERSA CASUAL
+    # DETECÇÃO DE CONVERSA CASUAL
     if is_casual_conversation(duvida_aluno):
         print(f"💬 Conversa casual detectada: '{duvida_aluno}' → resposta rápida")
         
         response = client.models.generate_content(
-            model="gemini-3-flash-preview",  # Modelo rápido
+            model="gemini-3-flash-preview",  # ✅ MODELO DISPONÍVEL
             contents=duvida_aluno,
             config=types.GenerateContentConfig(
                 system_instruction="""
@@ -69,10 +64,9 @@ def explicar_conceito(duvida_aluno, nivel="medio"):
         )
         return response.text
     
-    # 🧪 CONCEITO QUÍMICO NORMAL (OTIMIZADO)
+    # CONCEITO QUÍMICO NORMAL
     print(f"🔬 Conceito químico detectado: '{duvida_aluno[:50]}...' → resposta detalhada")
     
-    # Prompt mais direto para economizar tokens
     conteudo_prompt = f"""
     Responda de forma DIRETA e PROPORCIONAL à pergunta.
     
@@ -87,7 +81,7 @@ def explicar_conceito(duvida_aluno, nivel="medio"):
     """
     
     response = client.models.generate_content(
-        model="gemini-1.5-flash",  # Mudado para modelo estável e rápido
+        model="gemini-2.0-flash-exp",  # ✅ MODELO DISPONÍVEL
         contents=conteudo_prompt,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_INSTRUCTION_ARLY,
@@ -98,9 +92,9 @@ def explicar_conceito(duvida_aluno, nivel="medio"):
     return response.text
 
 def resolver_exercicio(enunciado):
-    """Função extra para resolução passo a passo de exercícios (OTIMIZADA)"""
+    """Função extra para resolução passo a passo de exercícios"""
     response = client.models.generate_content(
-        model="gemini-1.5-flash",  # Padronizado para flash (mais rápido)
+        model="gemini-2.0-flash-exp",  # ✅ MODELO DISPONÍVEL
         contents=f"Resolva este exercício de química: {enunciado}",
         config=types.GenerateContentConfig(
             system_instruction="""
@@ -123,43 +117,34 @@ def root():
     return jsonify({
         "status": "success",
         "professora": "Arly - Professora de Química IA",
-        "message": "API funcionando! Use /explicar para tirar dúvidas ou /exercicio para resolver problemas.",
+        "message": "API funcionando!",
         "versao": "2.0",
-        "recursos": {
-            "conversa_casual": "Respostas rápidas para saudações",
-            "explicacoes": "Explicações proporcionais à pergunta",
-            "exercicios": "Resolução passo a passo"
-        },
         "endpoints": {
             "/explicar": "POST - Envie {'pergunta': 'sua duvida', 'nivel': 'basico/medio/avancado'}",
             "/exercicio": "POST - Envie {'enunciado': 'texto do exercicio'}",
-            "/quimica/aleatoria": "GET - Gera um conceito químico aleatório"
         }
     }), 200
 
 @app.route("/explicar", methods=["POST"])
 def explicar():
-    """Endpoint principal para tirar dúvidas de química (INTELIGENTE)"""
+    """Endpoint principal para tirar dúvidas de química"""
     data = request.get_json()
     
-    # Validação 1: O JSON foi enviado?
     if not data or "pergunta" not in data:
         return jsonify({
             "status": "error",
-            "message": "Por favor, envie sua pergunta no formato: {'pergunta': 'O que é pH?'}"
+            "message": "Envie no formato: {'pergunta': 'O que é pH?'}"
         }), 400
     
     pergunta = data.get("pergunta", "").strip()
     nivel = data.get("nivel", "medio")
     
-    # Validação 2: A pergunta não está vazia
     if not pergunta:
         return jsonify({
             "status": "error",
             "message": "A pergunta não pode estar vazia."
         }), 400
     
-    # Validação 3: Nível válido
     if nivel not in ["basico", "medio", "avancado"]:
         return jsonify({
             "status": "error",
@@ -167,47 +152,38 @@ def explicar():
         }), 400
     
     try:
-        # Gera a explicação da Arly (agora com detecção inteligente)
         explicacao_json_string = explicar_conceito(pergunta, nivel)
         explicacao_estruturada = json.loads(explicacao_json_string)
         
-        # Verifica se é uma resposta de conversa casual (schema simples)
         if "resposta" in explicacao_estruturada:
-            # Resposta casual
             return jsonify({
                 "status": "success",
-                "professora": "Arly",
                 "tipo": "conversa",
-                "pergunta_do_aluno": pergunta,
                 "resposta": explicacao_estruturada["resposta"]
             }), 200
         else:
-            # Resposta de química normal
             return jsonify({
                 "status": "success",
-                "professora": "Arly",
                 "tipo": "quimica",
-                "pergunta_do_aluno": pergunta,
-                "nivel": nivel,
                 "aula": explicacao_estruturada
             }), 200
         
     except Exception as e:
+        print(f"Erro detalhado: {e}")
         return jsonify({
             "status": "error",
-            "message": f"Erro ao gerar explicação: {str(e)}",
-            "dica": "Tente reformular sua pergunta de forma mais clara."
+            "message": f"Erro: {str(e)}"
         }), 500
 
 @app.route("/exercicio", methods=["POST"])
 def exercicio():
-    """Endpoint para resolver exercícios de química"""
+    """Endpoint para resolver exercícios"""
     data = request.get_json()
     
     if not data or "enunciado" not in data:
         return jsonify({
             "status": "error",
-            "message": "Envie o enunciado no formato: {'enunciado': 'Calcule a massa molar do H2O...'}"
+            "message": "Envie no formato: {'enunciado': 'Calcule...'}"
         }), 400
     
     enunciado = data.get("enunciado", "").strip()
@@ -224,47 +200,8 @@ def exercicio():
         
         return jsonify({
             "status": "success",
-            "professora": "Arly",
             "tipo": "exercicio",
-            "exercicio": enunciado,
             "resolucao": resolucao_estruturada
-        }), 200
-        
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": f"Erro ao resolver exercício: {str(e)}"
-        }), 500
-
-@app.route("/quimica/aleatoria", methods=["GET"])
-def conceito_aleatorio():
-    """Gera um conceito químico aleatório para estudo"""
-    conceitos = [
-        "O que é uma ligação iônica?",
-        "Explique a tabela periódica",
-        "Como funciona o pH?",
-        "O que são ácidos e bases?",
-        "Explique a lei de Lavoisier",
-        "O que é catálise?",
-        "Diferença entre solução saturada e insaturada",
-        "O que é número de oxidação?",
-        "Explique a radioatividade",
-        "Como funciona a eletrólise?"
-    ]
-    
-    import random
-    pergunta_aleatoria = random.choice(conceitos)
-    
-    try:
-        explicacao_json_string = explicar_conceito(pergunta_aleatoria, "medio")
-        explicacao_estruturada = json.loads(explicacao_json_string)
-        
-        return jsonify({
-            "status": "success",
-            "professora": "Arly",
-            "tipo": "quimica",
-            "conceito_do_dia": pergunta_aleatoria,
-            "aula": explicacao_estruturada
         }), 200
         
     except Exception as e:
@@ -273,6 +210,6 @@ def conceito_aleatorio():
             "message": f"Erro: {str(e)}"
         }), 500
 
-# ========== EXECUÇÃO DO SERVIDOR ==========
-if __name__ == "__main__":    
-    app.run(debug=True)
+# ========== EXECUÇÃO ==========
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5000)
