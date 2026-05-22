@@ -1,76 +1,90 @@
-# config_arly.py
+# config_arly.py - VERSÃO COMPLETA OTIMIZADA
 
-# Schema para explicações de química
+# Schema para conversa casual
+CONVERSA_SIMPLES_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "resposta": {
+            "type": "STRING",
+            "description": "Resposta curta, amigável e natural (máximo 2 frases)"
+        }
+    },
+    "required": ["resposta"]
+}
+
+# Schema para explicações de química (OTIMIZADO)
 EXPLICACAO_QUIMICA_SCHEMA = {
     "type": "OBJECT",
     "properties": {
         "conceito_principal": {
             "type": "STRING", 
-            "description": "O nome do conceito químico que será explicado (ex: 'Ligação Covalente', 'pH', 'Tabela Periódica')"
+            "description": "Nome do conceito químico"
         },
         "explicacao_simplificada": {
             "type": "STRING",
-            "description": "Explicação clara e acessível do conceito, como se estivesse ensinando um aluno do ensino médio"
+            "description": "Explicação direta e clara (proporcional à pergunta)"
         },
         "exemplo_pratico": {
             "type": "STRING",
-            "description": "Um exemplo do dia a dia que ilustra o conceito químico"
+            "description": "Exemplo do dia a dia (apenas se relevante)"
         },
         "formulas_ou_equacoes": {
             "type": "ARRAY",
             "items": {"type": "STRING"},
-            "description": "Lista de fórmulas, reações ou equações químicas relevantes ao conceito"
+            "description": "Fórmulas relevantes (opcional)"
         },
         "pergunta_para_aluno": {
             "type": "STRING",
-            "description": "Uma pergunta para testar o entendimento do aluno sobre o conceito explicado"
+            "description": "Pergunta para reflexão (opcional)"
         },
         "dica_curiosidade": {
             "type": "STRING",
-            "description": "Uma curiosidade ou dica de estudo relacionada ao tema"
+            "description": "Curiosidade rápida (opcional)"
         }
     },
-    "required": ["conceito_principal", "explicacao_simplificada", "exemplo_pratico", 
-                 "formulas_ou_equacoes", "pergunta_para_aluno", "dica_curiosidade"]
+    "required": ["conceito_principal", "explicacao_simplificada"]
 }
 
-# Schema para resolução de exercícios
+# Schema para exercícios
 RESOLUCAO_EXERCICIO_SCHEMA = {
     "type": "OBJECT",
     "properties": {
         "interpretacao_problema": {
             "type": "STRING",
-            "description": "Reinterpretação do problema com suas próprias palavras"
+            "description": "Reinterpretação do problema"
         },
         "passo_a_passo": {
             "type": "ARRAY",
             "items": {"type": "STRING"},
-            "description": "Cada etapa da resolução explicada detalhadamente"
+            "description": "Passos da resolução (máximo 5)"
         },
         "resposta_final": {
             "type": "STRING",
-            "description": "Resposta final do exercício com unidade quando aplicável"
+            "description": "Resposta final direta"
         },
         "verificacao_entendimento": {
             "type": "STRING",
-            "description": "Pergunta para confirmar se o aluno entendeu a resolução"
+            "description": "Pergunta de verificação (opcional)"
         }
     },
-    "required": ["interpretacao_problema", "passo_a_passo", "resposta_final", "verificacao_entendimento"]
+    "required": ["interpretacao_problema", "passo_a_passo", "resposta_final"]
 }
 
 SYSTEM_INSTRUCTION_ARLY = """
-Você é a Arly, uma professora de Química apaixonada e paciente, com mais de 15 anos de experiência. 
-Sua missão é tornar a química fascinante e compreensível para todos os níveis.
+Você é a Arly, professora de Química direta e eficiente.
 
-Características da Arly:
-- Fala de forma calma, encorajadora e usa analogias criativas
-- SEMPRE explica conceitos complexos em linguagem simples primeiro
-- Adora fazer conexões com o cotidiano do aluno
-- Não julga perguntas "bobas" - todo conhecimento é válido
-- Incentiva o pensamento crítico com perguntas instigantes
-- Voce não deve de forma alguma fala explicitamente sobre pornografia ou algo que inflija o codigo de eitca e moral ou desrepeite as leis do Brasil, seguindo o codigo de conduta do país realizado a requisição
+REGRAS DE RESPOSTA:
+- "Oi", "Olá" → responda com 1-2 frases amigáveis
+- "Obrigado" → "Por nada! 😊" ou similar
+- Perguntas simples → respostas curtas (2-3 frases)
+- Conceitos complexos → explicação detalhada mas sem enrolação
 
-Você DEVE preencher todos os campos do esquema fornecido estritamente em português brasileiro.
-Se o aluno fizer uma pergunta específica, adapte o 'conceito_principal' e todos os campos para responder exatamente àquela dúvida.
+Sempre use português brasileiro e seja educada.
 """
+
+def is_casual_conversation(message):
+    """Detecta conversa casual"""
+    casual = ["oi", "olá", "ola", "e ai", "opa", "tudo bem", "como vai", 
+              "beleza", "obrigado", "valeu", "obg", "vlw", "blz"]
+    msg = message.lower().strip()
+    return any(p in msg for p in casual)
