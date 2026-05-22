@@ -45,7 +45,7 @@ def explicar_conceito(duvida_aluno, nivel="medio"):
     """
     
     response = client.models.generate_content(
-        model="gemini-2.0-flash-exp",  # Modelo estável para JSON estruturado
+        model="gemini-3-flash-preview",  # Modelo estável para JSON estruturado
         contents=conteudo_prompt,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_INSTRUCTION_ARLY,
