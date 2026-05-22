@@ -50,7 +50,7 @@ def explicar_conceito(duvida_aluno, nivel="medio"):
         print(f"💬 Conversa casual detectada: '{duvida_aluno}' → resposta rápida")
         
         response = client.models.generate_content(
-            model="gemini-1.5-flash",  # Modelo rápido
+            model="gemini-3-flash-preview",  # Modelo rápido
             contents=duvida_aluno,
             config=types.GenerateContentConfig(
                 system_instruction="""
